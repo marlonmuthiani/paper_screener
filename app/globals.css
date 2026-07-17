@@ -1,0 +1,324 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+:root {
+  --paper: #f4eee1;
+  --paper-deep: #ebe3d0;
+  --panel: #faf6eb;
+  --page: #fffdf7;
+  --ink: #221b12;
+  --ink-soft: #5b4d3c;
+  --ink-faint: #94836c;
+  --accent: #8d2b23;
+  --accent-deep: #6f1f19;
+  --accent-wash: rgba(141, 43, 35, 0.08);
+  --hairline: #d9cbb0;
+  --hairline-soft: #e5dac2;
+  /* text placed on accent-colored surfaces, in both themes */
+  --on-accent: #f6ede0;
+}
+
+/* Night edition — warm espresso, same editorial character.
+   PDF pages stay paper-white and float on the dark ground. */
+html[data-theme="dark"] {
+  --paper: #191309;
+  --paper-deep: #120d06;
+  --panel: #1f1810;
+  --page: #1c1611;
+  --ink: #ede3d0;
+  --ink-soft: #c0b098;
+  --ink-faint: #857459;
+  --accent: #c25441;
+  --accent-deep: #d96e5b;
+  --accent-wash: rgba(194, 84, 65, 0.14);
+  --hairline: #3b2f1f;
+  --hairline-soft: #2a2115;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-panel: var(--panel);
+  --color-page: var(--page);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-wash: var(--accent-wash);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-on-accent: var(--on-accent);
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), "Courier New", monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  font-feature-settings: "liga", "kern";
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+/* ---------- paper grain ---------- */
+
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- micro type utilities ---------- */
+
+.overline-label {
+  font-family: var(--font-plex-mono), "Courier New", monospace;
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ---------- entrance animations ---------- */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hint-float {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, -4px);
+  }
+}
+
+.anim-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.explain-pop {
+  /* Horizontal centering lives here (not in a utility class): the pop-in
+     keyframes animate `transform`, and a Tailwind translate would stack
+     with it and double the shift. */
+  transform: translate(-50%, 0);
+  animation: pop-in 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hint-float {
+  animation: hint-float 3.2s ease-in-out infinite;
+}
+
+.stream-caret::after {
+  content: "▍";
+  color: var(--accent);
+  margin-left: 1px;
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .explain-pop,
+  .hint-float {
+    animation: none;
+  }
+}
+
+/* ---------- react-pdf ---------- */
+
+.react-pdf__Page {
+  background: var(--page) !important;
+}
+
+.react-pdf__Page__textContent ::selection {
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+/* Night edition: re-ink the paper itself. Inverting the rendered canvas
+   turns the white page near-black and the text warm off-white; the
+   hue-rotate keeps colors (stamps, figure lines) from going negative,
+   and the sepia pass warms the result to match the espresso theme. */
+html[data-theme="dark"] .react-pdf__Page canvas {
+  filter: invert(0.92) hue-rotate(180deg) sepia(0.18) saturate(1.1);
+}
+
+html[data-theme="dark"] .react-pdf__Page__textContent ::selection {
+  background: color-mix(in srgb, var(--accent-deep) 45%, transparent);
+}
+
+/* ---------- explanation markdown ---------- */
+
+.prose-marginalia {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.prose-marginalia table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+
+.prose-marginalia th,
+.prose-marginalia td {
+  border: 1px solid var(--hairline-soft);
+  padding: 0.3em 0.6em;
+  text-align: left;
+}
+
+.prose-marginalia > * + * {
+  margin-top: 0.7em;
+}
+
+.prose-marginalia h3 {
+  font-family: var(--font-plex-mono), "Courier New", monospace;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 1.4em;
+  padding-top: 0.9em;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.prose-marginalia h3:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.prose-marginalia h1,
+.prose-marginalia h2,
+.prose-marginalia h4 {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.prose-marginalia strong {
+  font-weight: 600;
+}
+
+.prose-marginalia em {
+  font-style: italic;
+}
+
+.prose-marginalia ul,
+.prose-marginalia ol {
+  padding-left: 1.2em;
+}
+
+.prose-marginalia ul {
+  list-style: disc;
+}
+
+.prose-marginalia ol {
+  list-style: decimal;
+}
+
+.prose-marginalia li + li {
+  margin-top: 0.3em;
+}
+
+.prose-marginalia code {
+  font-family: var(--font-plex-mono), "Courier New", monospace;
+  font-size: 0.82em;
+  background: var(--accent-wash);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+.prose-marginalia pre {
+  overflow-x: auto;
+  background: var(--paper-deep);
+  border: 1px solid var(--hairline-soft);
+  padding: 0.7em 0.9em;
+  border-radius: 4px;
+}
+
+.prose-marginalia pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose-marginalia .katex {
+  font-size: 1.02em;
+}
+
+.prose-marginalia .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2em 0;
+  margin: 0.8em 0;
+}
+
+/* ---------- scrollbars ---------- */
+
+.styled-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline) transparent;
+}
+
+.styled-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.styled-scroll::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 4px;
+}
+
+.styled-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
